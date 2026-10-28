@@ -1,0 +1,52 @@
+rules_version = '2';
+
+// Task Board — Firestore security rules
+// - Every read/write requires a signed-in user (anonymous auth counts).
+// - Creates must contain exactly: title, completed, createdAt, createdBy.
+// - Updates may change ONLY `completed`.
+// - Deletes are never allowed.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Title must be a string, already trimmed by the client, 1–80 characters.
+    function validTitle(t) {
+      return t is string
+        && t == t.trim()
+        && t.size() >= 1
+        && t.size() <= 80;
+    }
+
+    function validNewTask(d) {
+      return d.keys().hasAll(['title', 'completed', 'createdAt', 'createdBy'])
+        && d.keys().hasOnly(['title', 'completed', 'createdAt', 'createdBy'])
+        && validTitle(d.title)
+        && d.completed is bool
+        && d.completed == false
+        && d.createdAt is timestamp
+        && d.createdAt == request.time        // must be serverTimestamp()
+        && d.createdBy is string
+        && d.createdBy == request.auth.uid;   // can't impersonate others
+    }
+
+    match /tasks/{taskId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn() && validNewTask(request.resource.data);
+
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['completed'])
+        && request.resource.data.completed is bool;
+
+      allow delete: if false;
+    }
+
+    // Everything else is locked down.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,52 @@
+# XcodeGen spec. Generate the Xcode project with:
+#   brew install xcodegen && cd ios && xcodegen
+name: TaskBoard
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "16.0"
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.0.0
+targets:
+  TaskBoard:
+    type: application
+    platform: iOS
+    sources:
+      - path: TaskBoard
+    resources:
+      # Download from the Firebase console (iOS app) and place here. Git-ignored.
+      - path: TaskBoard/GoogleService-Info.plist
+        optional: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.taskboard
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Task Board
+        SWIFT_VERSION: 5.9
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+  TaskBoardTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: TaskBoardTests
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: TaskBoard
+schemes:
+  TaskBoard:
+    build:
+      targets:
+        TaskBoard: all
+        TaskBoardTests: [test]
+    test:
+      targets:
+        - TaskBoardTests

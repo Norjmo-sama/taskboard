@@ -1,0 +1,14 @@
+{
+  "name": "taskboard-rules-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-taskboard --config ../firebase.json \"node --test tests/\"",
+    "test:only": "node --test tests/"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.10.0",
+    "firebase-tools": "^14.11.0"
+  }
+}
